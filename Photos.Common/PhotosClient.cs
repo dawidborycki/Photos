@@ -38,18 +38,38 @@ namespace Photos.Common
         {
             var response = await httpClient.GetAsync($"photos?albumId={albumId}");
 
-            CheckStatusCode(response);
+            var photoCollection = new List<Photo>();
 
-            return await DeserializeResponse<IEnumerable<Photo>>(response);
+            try
+            {
+                CheckStatusCode(response);
+
+                photoCollection = await DeserializeResponse<List<Photo>>(response);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return photoCollection;
         }
 
         public static async Task<byte[]> GetImageData(Photo photo)
         {
-            Check.IsNull(photo);
+            var imageData = new byte[0];
 
-            var result = await httpClient.GetByteArrayAsync(photo.ThumbnailUrl);
+            try
+            {
+                Check.IsNull(photo);
 
-            return result;
+                imageData = await httpClient.GetByteArrayAsync(photo.ThumbnailUrl);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return imageData;
         }
 
         #endregion

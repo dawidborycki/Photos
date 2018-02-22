@@ -19,7 +19,7 @@
                         <table alignment="left" id="884">
                             <items>
                                 <tableRow id="885" customClass="PhotoRowController">
-                                    <group key="rootItem" width="1" alignment="left" id="886">
+                                    <group key="rootItem" alignment="left" id="886" height="50">
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <items>
                                             <imageView alignment="left" id="887" width="50" height="50">

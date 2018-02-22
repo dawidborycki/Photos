@@ -13,8 +13,8 @@ namespace Photos.iOS.WatchKitExtension
         public int BeginIndex { get; private set; }
         public int EndIndex { get; private set; }
 
-        public int RowCount { get => EndIndex - BeginIndex + 1; }
-        public string Title { get => $"{titlePrefix} {BeginIndex}-{EndIndex}"; }
+public int RowCount { get; private set; }
+public string Title { get; private set; }
 
         #endregion
 
@@ -24,40 +24,15 @@ namespace Photos.iOS.WatchKitExtension
 
         #endregion
 
-        #region Constructors
-
-        public RowSelection(int beginIndex = 0, int endIndex = 10)
-        {
-            BeginIndex = beginIndex;
-            EndIndex = endIndex;
-        }
+        #region Constructor
 
         public RowSelection(int groupIndex, int rowsPerGroup, int elementCount)
         {
             BeginIndex = groupIndex * rowsPerGroup;
             EndIndex = Math.Min((groupIndex + 1) * rowsPerGroup, elementCount) - 1;
-        }
 
-        #endregion
-
-        #region Methods (Public)
-
-        public static RowSelection Parse(string title)
-        {
-            try
-            {
-                var titleWithoutPrefix = title.Substring(titlePrefix.Length);
-                var strIndices = titleWithoutPrefix.Split('-');
-
-                var beginIndex = int.Parse(strIndices[0]);
-                var endIndex = int.Parse(strIndices[1]);
-
-                return new RowSelection(beginIndex, endIndex);
-            }
-            catch (Exception)
-            {
-                return new RowSelection();
-            }
+            RowCount = EndIndex - BeginIndex + 1;
+            Title = $"{titlePrefix} {BeginIndex}-{EndIndex}";
         }
 
         #endregion

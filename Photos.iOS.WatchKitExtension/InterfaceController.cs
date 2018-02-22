@@ -19,7 +19,7 @@ namespace Photos.iOS.WatchKitExtension
 
         private const int rowsPerGroup = 10;
         private IEnumerable<Photo> photos;
-        private string[] groupTitles;
+        private WKAlertAction[] alertActions;
 
         #endregion
 
@@ -34,34 +34,30 @@ namespace Photos.iOS.WatchKitExtension
 
         #region View events
 
-        public override void Awake(NSObject context)
+        public async override void Awake(NSObject context)
         {
             base.Awake(context);
 
             SetTitle("Hello, watch!");
+
+            // Disable button until the photos are downloaded
+            ButtonDisplayPhotoList.SetEnabled(false);
+
+            // Get photos from the web service (first album only)
+            photos = await PhotosClient.GetByAlbumId(1);
+
+            // Create actions for the alert
+            CreateAlertActions();
+
+            ButtonDisplayPhotoList.SetEnabled(true);
         }
 
-        public async override void WillActivate()
-        {
-            if (photos == null)
-            {
-                // Disable button until the photos are downloaded
-                ButtonDisplayPhotoList.SetEnabled(false);
-
-                // Get photos from the web service (first album only)
-                photos = await PhotosClient.GetByAlbumId(1);
-
-                // Configure titles for the text input controller
-                groupTitles = GetGroupTitles();
-
-                ButtonDisplayPhotoList.SetEnabled(true);
-            }
+        public override void WillActivate()
+        {            
         }
 
         public override void DidDeactivate()
-        {
-            // This method is called when the watch view controller is no longer visible to the user.
-            Console.WriteLine("{0} did deactivate", this);
+        {            
         }
 
         #endregion
@@ -69,27 +65,35 @@ namespace Photos.iOS.WatchKitExtension
         #region Event handlers
 
         partial void ButtonDisplayPhotoList_Activated()
-        {
-            PresentTextInputController(groupTitles, WKTextInputMode.Plain, DisplaySelectedPhotos);
+        {            
+            PresentAlertController(string.Empty, string.Empty, 
+                                   WKAlertControllerStyle.ActionSheet, alertActions);
         }
 
         #endregion
 
         #region Methods (Private)
 
-        private async void DisplaySelectedPhotos(NSArray result)
+        private void CreateAlertActions()
         {
-            if (result != null)
+            var actionsCount = photos.Count() / rowsPerGroup;
+
+            alertActions = new WKAlertAction[actionsCount];
+
+            for (var i = 0; i < actionsCount; i++)
             {
-                var menuItem = result.GetItem<NSObject>(0).ToString();
+                var rowSelection = new RowSelection(
+                    i, rowsPerGroup, photos.Count());
 
-                var rowSelection = RowSelection.Parse(menuItem);
+                var alertAction = WKAlertAction.Create(rowSelection.Title,
+                                                       WKAlertActionStyle.Default,
+                                                       async () => { await DisplaySelectedPhotos(rowSelection); });
 
-                await LoadTableRows(rowSelection);
+                alertActions[i] = alertAction;
             }
         }
 
-        private async Task LoadTableRows(RowSelection rowSelection)
+        private async Task DisplaySelectedPhotos(RowSelection rowSelection)
         {
             TablePhotos.SetNumberOfRows(rowSelection.RowCount, "default");
 
@@ -99,23 +103,6 @@ namespace Photos.iOS.WatchKitExtension
 
                 await elementRow.SetElement(photos.ElementAt(i));
             }
-        }
-
-        private string[] GetGroupTitles()
-        {
-            var groupCount = photos.Count() / rowsPerGroup;
-
-            var titles = new List<string>();
-
-            for (var i = 0; i < groupCount; i++)
-            {
-                var rowSelection = new RowSelection(
-                    i, rowsPerGroup, photos.Count());
-
-                titles.Add(rowSelection.Title);
-            }
-
-            return titles.ToArray();
         }
 
         #endregion
